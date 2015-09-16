@@ -8,7 +8,7 @@ for (var i = 0; i < 10; ++i) {
 	}
 }
 
-console.log("[1.1]", i, j);
+console.log("[1.1]", i, j); 
 
 function f(i) {
 	var j = i;
