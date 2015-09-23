@@ -1,3 +1,73 @@
+<!DOCTYPE html>
 <html>
-	<p> Bonjour </p>
+	<head>
+	
+		<style>
+			canvas[resize]
+			{
+				width : 100%;
+				height : 100%;
+				border : 4px solid black;
+			}
+		</style>
+		
+		<!-- Load the Paper.js library -->
+		<script type="text/javascript" src="index_files/paper.js"></script>
+		
+		<!-- Define inlined PaperScript associate it with myCanvas -->
+		<script type="text/paperscript" canvas="myCanvas">
+		
+			var ws = new WebSocket('ws://localhost:8001');
+			ws.on('open', function() {
+				ws.send('requête client');
+			});
+			ws.on('message', function(message) {
+				console.log('received: %s', message);
+			});
+			
+			var x = 0;
+			var vector;
+			var centre = new Point(500, 250);
+			
+			var circle = new Path.Circle(centre, 20);
+			circle.fillColor = 'red';
+			var tab = [circle];
+			
+			for(i = 0 ; i < 500 ; i++)
+			{
+				tab.push(circle.clone());
+			}
+		
+			function onMouseMove(event)
+			{
+				vector = event.point - circle.position;
+				vector.length = 500;
+				x = 1;
+			}
+			
+			function onMouseDown(event)
+			{
+				var copie = circle.clone()
+				tab.push(copie);
+			}
+			
+			function onFrame(event)
+			{
+
+				if(x == 1)
+				{
+					circle.fillColor.hue += 0.3;
+					circle.position += vector / 60;
+				}
+				
+				var copie = circle.clone();
+				tab.push(copie);
+				tab.splice(1,1)[0].remove();
+			}
+		</script>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" resize="true"></canvas>
+	</body>
 </html>
