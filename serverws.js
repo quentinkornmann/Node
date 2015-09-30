@@ -25,7 +25,7 @@ console.log('HTTPS server listening on port 8000');
 
 /*https://www.npmjs.com/package/ws*/
 
-var WebSocketServer = require('ws').Server
+/*var WebSocketServer = require('ws').Server
   , wss = new WebSocketServer({ port: 8000 });
 console.log('server listening on port 8000');
 
@@ -35,4 +35,4 @@ wss.on('connection', function connection(ws) {
   });
 
   ws.send('reponse_serveur');
-});
+});*/
