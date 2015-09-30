@@ -1,8 +1,9 @@
 var express = require('express');
 var https = require('https');
-var http = require('http');
 var fs = require('fs');
 var app = express();
+
+app.use(express.static(__dirname+"/views"));
 
 var privateKey = fs.readFileSync('keys/monca.key');
 var certificate = fs.readFileSync('keys/monca.crt');
@@ -11,28 +12,32 @@ var options = {
 	cert : certificate
 };
 
-app.use(express.static(__dirname + '/views'));
-
-app.get('/', function (req, res) {
-  //res.send('Hello World!');
-  res.setHeader("Content-Type", "text/html");
-  res.render(__dirname + 'index');
-});
-
 var server = https.createServer(options, app);
+
 server.listen(8000);
-console.log('HTTPS server listening on port 8000');
 
-/*https://www.npmjs.com/package/ws*/
-
-/*var WebSocketServer = require('ws').Server
-  , wss = new WebSocketServer({ port: 8000 });
-console.log('server listening on port 8000');
+var WebSocketServer = require('ws').Server, wss = new WebSocketServer({ server : server });
+var id = 0;
+//var clients = {};
+var v:
 
 wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(message) {
+  console.log('connection ' + id + ' établie');
+  //clients[id] = connection;
+  id++;
+  
+  ws.on('message', function (message){
     console.log('received: %s', message);
+	ws.send('reponse');
   });
+});
+ 
+console.log('Server listening on port 8000');
 
-  ws.send('reponse_serveur');
-});*/
+function f() {
+	v = setInterval(send, 16);
+}
+
+function send() {
+
+}
