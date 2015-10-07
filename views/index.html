@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	
 		<style>
 			canvas[resize]
 			{
@@ -14,53 +13,91 @@
 		<!-- Load the Paper.js library -->
 		<script type="text/javascript" src="index_files/paper.js">
 		</script>
-		<script type="text/javascript">
-			var ws = new WebSocket('wss://localhost:8000');
-			ws.onmessage = function(e){
-				var element = document.getElementById("reponse");
-				element.innerHTML = e.data;
-			};
-		</script>
-		
 		<!-- Define inlined PaperScript associate it with myCanvas -->
 		<script type="text/paperscript" canvas="myCanvas">
-			
-			var vector = 300;
-			var centre = new Point(Math.random() * 1000, Math.random() * 400);
-			
-			var circle = new Path.Circle(centre, 20);
-			circle.fillColor = 'red';
+		
+			var ws = new WebSocket('wss://localhost:8000');
+			var x = 0, j = 1;
+			var vector;
+			var circle;
 			var tab = [circle];
 			
-			for(i = 0 ; i < 40 ; i++)
-			{
-				tab.push(circle.clone());
+			ws.onmessage = function(e){
+				// traitement de la réponse du serveur
+				var rep = e.data.substring(0,4);
+				switch(rep){
+					case "init" :
+						init();
+						x = 1;
+						break;
+					case "upda" :
+						break;
+				}
+			};
+			
+			/*var t = [];
+			var ti = [];
+			for(var k = 1 ; k < tab.length ; k++){
+				if(tab[k] != null){
+					var tk = [];
+					tk[0] = tab[k].position.x;
+					tk[1] = tab[k].position.y;
+					t[k] = tk;
+				}
+			}*/
+			
+			function init(){
+				vector = new Point(Math.random() * 1000, Math.random() * 400) - new Point(Math.random() * 1000, Math.random() * 400);
+				vector.length = 200;
+				vector.angle = Math.random() * 360;
+			
+				var centre = new Point(Math.random() * 1000, Math.random() * 400);
+				circle = new Path.Circle(centre, 20);
+				circle.fillColor = 'red';
+				
+				for(var i = 0 ; i < 10 ; i++)
+				{
+					tab.push(circle.clone());
+				}
+				//f();
 			}
 		
-			function onMouseMove(event)
-			{
-				ws.send('test');
-				vector = event.point - circle.position;
-				vector.length = 500;
-				x = 1;
+			function onMouseMove(event){
+				if(x == 1)
+				{
+					vector = event.point - circle.position;
+					vector.length = 300;
+				}
 			}
 			
-			function onFrame(event)
-			{
-				circle.fillColor.hue += 0.3;
-				circle.position += vector / 60;
-				
-				var copie = circle.clone();
-				tab.push(copie);
-				tab.splice(1,1)[0].remove();
+			function onFrame(event){
+				if( x == 1)
+				{
+					j++;
+					circle.fillColor.hue += 0.3;
+					circle.position += vector / 60;
+						
+					if(j == 5)
+					{
+						tab.splice(1,1)[0].remove();
+						var copie = circle.clone();
+						tab.push(copie);
+						j = 1;
+					}
+				}
+			}
+			
+			function f(){
+				v = setInterval(sendt, 5000);
+			}
+			
+			function sendt(){
+				ws.send(JSON.stringify(t));
 			}
 		</script>
 	</head>
 
 	<body>
 		<canvas id="myCanvas" resize="true"></canvas>
-		<div>
-			<p id="reponse"> texte </p>
-		</div>
 	</body>
 </html>
