@@ -19,44 +19,52 @@ server.listen(port);
 console.log('Server listening on port ' + port);
 
 var WebSocketServer = require('ws').Server, wss = new WebSocketServer({ server : server });
-var id = 0;
 var sockets = [];
-var v;
+var lastid = 0, v, dx, dy, res, norm;
 
 wss.on('connection', function connection(ws) {
-	console.log('connection ' + id + ' établie');
-	sockets[id] = ws;
+	console.log('connection ' + lastid + ' établie');
+	sockets.push(ws);
 	ws.send('init');
-	console.log('init sent ' + id);
-	id++;
+	console.log('init sent ' + lastid);
+	lastid++;
+	f();
 	
-	ws.on('message', function(e){
-		// traitement requête client
+	ws.on('message', function(msg){
+
+		res = msg.split("/");
+		dx = res[2] - res[0];
+		dy = res[3] - res[1];
+		norm = Math.sqrt((res[3] - res[1]) * (res[3] - res[1]) + (res[2] - res[0]) * (res[2] - res[0]));
+		res.splice(res.length - 2, 2);
+		console.log('dx : ' + dx);
+		console.log('dy : ' + dy);		
 	});
 	
 	ws.on('close', function(){
 		for(var i = 0 ; i < sockets.length ; i++){
-			if(sockets[i] = ws){
+			if(sockets[i] == ws){
 				sockets.splice(i, 1);
+				console.log('client ' + i + ' déconnecté');
 			}
 		}
 	});
 });
 
-f();
 function f() {
-	v = setInterval(send, 2000);
+	v = setInterval(send, 50);
 };
-
-function send() {
-	var msg = 'test';
 	
-	for(var i = 0 ; i < sockets.length ; i++)
-	{
-		if(sockets[i] != null)
-		{
-			sockets[i].send(msg);
-			console.log(msg + ' sent');
-		}
+function send() {
+	var x, y;
+	if(res != null){
+		x = parseFloat(res[0]);
+		x += dx / (norm / 5);
+		res[0] = x.toString();
+		y = parseFloat(res[1]);
+		y += dy / (norm / 5);
+		res[1] = y.toString();
+		
+		sockets[lastid - 1].send("upda" + res.toString());
 	}
 };	

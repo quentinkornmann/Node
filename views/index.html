@@ -17,82 +17,87 @@
 		<script type="text/paperscript" canvas="myCanvas">
 		
 			var ws = new WebSocket('wss://localhost:8000');
-			var x = 0, j = 1;
-			var vector;
-			var circle;
-			var tab = [circle];
+			var rep = "", i = 1, j = 0;
+			var vector, clone, circle, destPoint;
+			var tab = [];
 			
-			ws.onmessage = function(e){
+			ws.onmessage = function(msg){
 				// traitement de la réponse du serveur
-				var rep = e.data.substring(0,4);
-				switch(rep){
+				var cmd = msg.data.substring(0,4);
+				switch(cmd){
 					case "init" :
 						init();
-						x = 1;
 						break;
 					case "upda" :
-						break;
+						rep = msg.data.substring(4);
+						console.log("update received");
+						console.log(rep);
+						update(rep);
+							break;
+					default :
+						console.log("Cas default atteint, message : " + msg.data);
 				}
 			};
 			
-			/*var t = [];
-			var ti = [];
-			for(var k = 1 ; k < tab.length ; k++){
-				if(tab[k] != null){
-					var tk = [];
-					tk[0] = tab[k].position.x;
-					tk[1] = tab[k].position.y;
-					t[k] = tk;
-				}
-			}*/
-			
 			function init(){
-				vector = new Point(Math.random() * 1000, Math.random() * 400) - new Point(Math.random() * 1000, Math.random() * 400);
-				vector.length = 200;
-				vector.angle = Math.random() * 360;
 			
 				var centre = new Point(Math.random() * 1000, Math.random() * 400);
 				circle = new Path.Circle(centre, 20);
 				circle.fillColor = 'red';
 				
-				for(var i = 0 ; i < 10 ; i++)
-				{
-					tab.push(circle.clone());
+				tab.push(circle);
+			}
+			
+			function update(str){
+				var ta = str.split(",");
+				var nx, ny;
+				nx = ta[0];
+				ny = ta[1];
+				
+				/*if(nx > 1000){
+					nx -= 1000;
 				}
-				//f();
+				else if(nx < 0){
+					nx += 1000;
+				}
+				
+				if(ny > 400){
+					ny -= 400;
+				}
+				else if(ny < 0){
+					ny += 400;
+				}*/
+				
+				circle.position.x = nx;
+				circle.position.y = ny;
+				view.update();
+				
+				j++;
+				if(j == 8){
+					clone = circle.clone();
+					tab.push(clone);
+					if( i < 10){
+						i++;
+					}
+					else{
+						tab.splice(1,1)[0].remove();
+					}
+					j = 0;
+				}
 			}
 		
 			function onMouseMove(event){
-				if(x == 1)
-				{
-					vector = event.point - circle.position;
-					vector.length = 300;
+				destPoint = event.point;
+				envoyer();
+			}
+			
+			
+			function envoyer(){
+				if(circle != null){
+					var res = circle.position.x + '/' + circle.position.y + '/' + destPoint.x + '/' + destPoint.y;
+					ws.send(res);	
+					console.log('res = : ' + res);
 				}
-			}
-			
-			function onFrame(event){
-				if( x == 1)
-				{
-					j++;
-					circle.fillColor.hue += 0.3;
-					circle.position += vector / 60;
-						
-					if(j == 5)
-					{
-						tab.splice(1,1)[0].remove();
-						var copie = circle.clone();
-						tab.push(copie);
-						j = 1;
-					}
-				}
-			}
-			
-			function f(){
-				v = setInterval(sendt, 5000);
-			}
-			
-			function sendt(){
-				ws.send(JSON.stringify(t));
 			}
 		</script>
 	</head>
