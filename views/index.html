@@ -18,72 +18,60 @@
 		
 			var ws = new WebSocket('wss://localhost:8000');
 			var rep = "", i = 1, j = 0;
-			var vector, clone, circle, destPoint;
+			var vector, circle, destPoint;
 			var tab = [];
+			var snakes = [];
 			
 			ws.onmessage = function(msg){
 				// traitement de la réponse du serveur
 				var cmd = msg.data.substring(0,4);
 				switch(cmd){
 					case "init" :
+						console.log("init received");
 						init();
 						break;
 					case "upda" :
 						rep = msg.data.substring(4);
-						console.log("update received");
-						console.log(rep);
+						console.log("update received : " + rep);
 						update(rep);
-							break;
+						break;
 					default :
 						console.log("Cas default atteint, message : " + msg.data);
+						break;
 				}
 			};
 			
-			function init(){
-			
+			function init(){				
 				var centre = new Point(Math.random() * 1000, Math.random() * 400);
 				circle = new Path.Circle(centre, 20);
 				circle.fillColor = 'red';
 				
 				tab.push(circle);
+				
+				for(var k = 0 ; k < 9 ; k++){
+					var clone = circle.clone();
+					tab.push(clone);
+				}
+				console.log('init terminé');
+				console.log(tab);
 			}
 			
 			function update(str){
-				var ta = str.split(",");
-				var nx, ny;
-				nx = ta[0];
-				ny = ta[1];
+				project.activeLayer.removeChildren();
+				var t = [];
+				var tk = [];
 				
-				/*if(nx > 1000){
-					nx -= 1000;
-				}
-				else if(nx < 0){
-					nx += 1000;
+				t = str.split("|");
+				
+				for(var k = 0 ; k < t.length ; k++){
+					tk = t[k].split["/"];
+					for(var l = 0 ; l < tk.length ; l+=2){
+						var p = new Point(tk[l], tk[l+1]);
+						var c = new Path.Circle(p, 20);
+					}
 				}
 				
-				if(ny > 400){
-					ny -= 400;
-				}
-				else if(ny < 0){
-					ny += 400;
-				}*/
-				
-				circle.position.x = nx;
-				circle.position.y = ny;
 				view.update();
-				
-				j++;
-				if(j == 8){
-					clone = circle.clone();
-					tab.push(clone);
-					if( i < 10){
-						i++;
-					}
-					else{
-						tab.splice(1,1)[0].remove();
-					}
-					j = 0;
-				}
 			}
 		
 			function onMouseMove(event){
@@ -91,12 +79,16 @@
 				envoyer();
 			}
 			
-			
 			function envoyer(){
+				var res = "";
 				if(circle != null){
-					var res = circle.position.x + '/' + circle.position.y + '/' + destPoint.x + '/' + destPoint.y;
+					for( k = 0 ; k < tab.length ; k++){
+						res += tab[0].position.x + '/' + tab[0].position.y + '/';
+					}
+					res += destPoint.x + '/' + destPoint.y;
+					
 					ws.send(res);	
-					console.log('res = : ' + res);
+					console.log(res);
 				}
 			}
 		</script>
