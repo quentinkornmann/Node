@@ -17,78 +17,103 @@
 		<script type="text/paperscript" canvas="myCanvas">
 		
 			var ws = new WebSocket('wss://localhost:8000');
-			var rep = "", i = 1, j = 0;
+			var rep = "", str = "";
 			var vector, circle, destPoint;
-			var tab = [];
-			var snakes = [];
+			var snake = [];	// le snakeleau contenant le serpent du joueur courant
 			
 			ws.onmessage = function(msg){
-				// traitement de la réponse du serveur
-				var cmd = msg.data.substring(0,4);
-				switch(cmd){
-					case "init" :
-						console.log("init received");
-						init();
-						break;
-					case "upda" :
-						rep = msg.data.substring(4);
-						console.log("update received : " + rep);
-						update(rep);
-						break;
-					default :
-						console.log("Cas default atteint, message : " + msg.data);
-						break;
+				if(msg.data != null){
+					var cmd = msg.data.substring(0,4);
+					var num = msg.data.substring(4,1); // le numéro du joueur
+					switch(cmd){
+						case "init" :	// commande init reçue du serveur
+							console.log("init recu");
+							init();
+							break;
+						case "upda" :	// commande update reçue du serveur
+							rep = msg.data.substring(5);
+							update(rep, num);
+							break;
+						default :
+							// erreur
+							console.log("Cas default atteint, message reçu : " + msg.data);
+							break;
+					}
 				}
 			};
 			
 			function init(){				
 				var centre = new Point(Math.random() * 1000, Math.random() * 400);
+				var destPoint = new Point(Math.random() * 1000, Math.random() * 400);
 				circle = new Path.Circle(centre, 20);
 				circle.fillColor = 'red';
 				
-				tab.push(circle);
+				snake.push(circle);
 				
-				for(var k = 0 ; k < 9 ; k++){
+				for(var i = 0 ; i < 9 ; i++){	// créée 9 cercles, copies identiques du premier cercle créé à une position générée aléatoirement
 					var clone = circle.clone();
-					tab.push(clone);
+					snake.push(clone);
 				}
-				console.log('init terminé');
-				console.log(tab);
 			}
 			
-			function update(str){
+			function update(str, num){
 				project.activeLayer.removeChildren();
+				
 				var t = [];
-				var tk = [];
+				var t2 = [];
+				var str2;
 				
-				t = str.split("|");
+				console.log(str);
+				t = str.split("|");	// chaque case du snakeleau contient l'ensemble des position des 10 cercles (20 floats séparés par des /) représentant le snake d'un joueur
 				
-				for(var k = 0 ; k < t.length ; k++){
-					tk = t[k].split["/"];
-					for(var l = 0 ; l < tk.length ; l+=2){
-						var p = new Point(tk[l], tk[l+1]);
-						var c = new Path.Circle(p, 20);
+				for(var i = 0 ; i < t.length ; i++){
+					str2 = t[i];
+					t2 = str2.split("/");	// chaque case du snakeleau contient une des coordonnée de la position d'un cercle du joueur i
+					
+					for(var j = 0 ; j < t2.length ; j+= 2){
+						var p = new Point(parseFloat(t2[j]), parseFloat(t2[j+1]));
+						var c = new Path.Circle(p, 20);	// on affiche un cercle en utilisant les coordonnées du cercle, x étant à l'indice j, et y à l'indice j+1
+						c.fillColor = 'red';
+					}
+					
+					if(i == num){
+						for(var k = 0 ; k < t2.length ; k++){	// met à jour les coordonnées des cercles du joueur courant
+							snake[k].position.x = parseFloat(t2[k*2]);
+							snake[k].position.y = parseFloat(t2[(k*2)+1]);
+						}
 					}
 				}
 				
 				view.update();
+				envoyer();
 			}
 		
 			function onMouseMove(event){
 				destPoint = event.point;
-				envoyer();
+				envoyer2();
 			}
 			
 			function envoyer(){
-				var res = "";
+				res = "";
 				if(circle != null){
-					for( k = 0 ; k < tab.length ; k++){
-						res += tab[0].position.x + '/' + tab[0].position.y + '/';
+					for( i = 0 ; i < snake.length ; i++){
+						res += snake[i].position.x + '/' + snake[i].position.y;
+						if(i+1 != snake.length){
+							res += '/';
+						}
+					}
+					ws.send(res);	
+				}
+			}
+			
+			function envoyer2(){
+				res = "";
+				if(circle != null){
+					for( i = 0 ; i < snake.length ; i++){
+						res += snake[i].position.x + '/' + snake[i].position.y + '/';
 					}
 					res += destPoint.x + '/' + destPoint.y;
-					
 					ws.send(res);	
-					console.log(res);
 				}
 			}
 		</script>

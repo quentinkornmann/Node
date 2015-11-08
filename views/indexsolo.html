@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			canvas[resize]
+			{
+				width : 1000px;
+				height : 400px;
+				border : 4px solid black;
+			}
+		</style>
+		
+		<!-- Load the Paper.js library -->
+		<script type="text/javascript" src="index_files/paper.js">
+		</script>
+		<!-- Define inlined PaperScript associate it with myCanvas -->
+		<script type="text/paperscript" canvas="myCanvas">
+		
+			var ws = new WebSocket('wss://localhost:8000');
+			var rep = "", i = 1, j = 0;
+			var vector, clone, circle, destPoint;
+			var tab = [];
+			
+			ws.onmessage = function(msg){
+				// traitement de la réponse du serveur
+				var cmd = msg.data.substring(0,4);
+				switch(cmd){
+					case "init" :
+						init();
+						break;
+					case "upda" :
+						rep = msg.data.substring(4);
+						console.log("update received : " + rep);
+						update(rep);
+							break;
+					default :
+						console.log("Cas default atteint, message : " + msg.data);
+				}
+			};
+			
+			function init(){
+				var centre = new Point(Math.random() * 1000, Math.random() * 400);
+				circle = new Path.Circle(centre, 20);
+				circle.fillColor = 'red';
+				
+				tab.push(circle);
+			}
+			
+			function update(str){
+				var t = str.split(",");
+				var x, y;
+				x = t[0];
+				y = t[1];
+				
+				circle.position.x = x;
+				circle.position.y = y;
+				
+				if(x <= 0){
+					circle.position.x = 1000;
+					envoyer2();
+				}
+				if(x >= 1000){
+					circle.position.x = 0;
+					envoyer2();
+				}
+				
+				if(y <= 0){
+					circle.position.y = 400;
+					envoyer2();
+				}				
+				if(y >= 400){
+					circle.position.y = 0;
+					envoyer2();
+				}
+				
+				circle.fillColor.hue += 0.3;
+				view.update();
+				
+				// tant que i est inférieur a 10, cela va créer un cercle derrière le premier cercle qui se déplace, et cela 9 fois afin d'avoir en permanence 10 cercles à l'écran
+				// quand i vaut 10, cela supprime le dernier cercle du serpent lorsqu'une nouvelle copie est créée
+				j++;
+				if(j == 8){
+					clone = circle.clone();
+					tab.push(clone);
+					if( i < 10){
+						i++;
+					}
+					else{
+						tab.splice(1,1)[0].remove();
+					}
+					j = 0;
+				}
+			}
+		
+			function onMouseMove(event){
+				destPoint = event.point;
+				envoyer();
+			}
+			
+			function envoyer(){
+				if(circle != null){
+					var res = circle.position.x + '/' + circle.position.y + '/' + destPoint.x + '/' + destPoint.y;
+					ws.send(res);	
+				}
+			}
+			
+			function envoyer2(){
+				var res = circle.position.x + '/' + circle.position.y;
+				ws.send(res);
+			}
+		</script>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" resize="true"></canvas>
+	</body>
+</html>
